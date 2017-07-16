@@ -1,3 +1,4 @@
+#include <R.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -956,7 +957,10 @@ int Solver::select_working_set(int &out_i, int &out_j)
 			}
 		}
 	}
-
+	if (Gmax_idx < 0 || Gmin_idx < 0) {
+		error("Overflow / NaNs produced.");
+		return 1;
+	}
 	if(Gmax+Gmax2 < eps)
 		return 1;
 
@@ -1207,7 +1211,10 @@ int Solver_NU::select_working_set(int &out_i, int &out_j)
 			}
 		}
 	}
-
+	if (Gmin_idx == -1 || ((y[Gmin_idx] == +1)?Gmaxp_idx:Gmaxn_idx) == -1) {
+		error("Overflow / NaNs produced.");
+		return 1;
+	}
 	if(max(Gmaxp+Gmaxp2,Gmaxn+Gmaxn2) < eps)
 		return 1;
 
@@ -1884,7 +1891,24 @@ void Solver_B::Solve(int l, const Kernel& Q, double *b_, schar *y_,
 			else
 				counter = 1;	// do shrinking next iteration
 		}
+                if (counter == min(l*2/qpsize, 2000/qpsize))
+                  {
+                    bool same = true;
+                    for (i=0;i<qpsize;i++)
+                      if (old_working_set[i] != working_set[i]) 
+                        {
+                          same = false;
+                          break;
+                        }
+                    
+                    if (same)
+                      break;
+                  }
+
+		for (i=0;i<qpsize;i++)
+			old_working_set[i] = working_set[i];
 		
+
 		++iter;
 
 		// construct subproblem
