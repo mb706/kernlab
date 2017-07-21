@@ -182,6 +182,9 @@ function (x,
     y <- 1
   else
     if (is.factor(y)) {
+      if (type %in% c("spoc-svc", "kbb-svc")) {
+        y <- factor(y)  # max(y) must be less or equal length(unique(y)), otherwise -> segfault
+      }
       lev(ret) <- levels (y)
       y <- as.integer (y)
       if (!is.null(class.weights)) {
@@ -196,6 +199,9 @@ function (x,
 
       if (type(ret) != "eps-svr" || type(ret) != "nu-svr"|| type(ret)!="eps-bsvr")
         lev(ret) <- sort(unique (y))
+      if (type %in% c("spoc-svc", "kbb-svc")) {
+        y <- as.integer(factor(y))  # max(y) must be less or equal length(unique(y)), otherwise -> segfault
+      }
     }
  ## initialize    
   nclass(ret) <- length (unique(y))
